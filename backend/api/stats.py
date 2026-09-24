@@ -15,9 +15,16 @@ stats_bp = Blueprint("stats", __name__)
 
 
 def _iter_submissions():
-    """遍历所有提交分片，产出提交记录。"""
-    for s in list(engine._recent):
-        yield s
+    """遍历所有提交分片，产出提交记录（以磁盘分片为权威数据源，
+    不使用 engine._recent 内存缓存——后者只保留最近 5000 条）。"""
+    for cid in list_dirs(config.SUBMISSIONS_DIR):
+        cdir = os.path.join(config.SUBMISSIONS_DIR, cid)
+        for uid in list_files(cdir):
+            shard = read_json(os.path.join(cdir, uid + ".json"))
+            if not shard:
+                continue
+            for s in shard.get("submissions", []):
+                yield s
 
 
 def _iter_problems():
