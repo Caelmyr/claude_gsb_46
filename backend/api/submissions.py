@@ -8,7 +8,7 @@ from backend.api import ok, err, require_auth, require_admin
 from backend.judge import engine
 from backend.judge.ranking import contest_status
 from backend.storage import read_json
-from backend.utils import clamp, user_key
+from backend.utils import clamp
 
 submissions_bp = Blueprint("submissions", __name__)
 
@@ -59,13 +59,13 @@ def create_submission():
 def list_submissions():
     user_id = request.args.get("user_id")
     if request.args.get("mine") == "1":
-        user_id = user_key(request.user)
+        user_id = request.user["id"]
     contest_id = request.args.get("contest_id")
     problem_id = request.args.get("problem_id")
     limit = clamp(request.args.get("limit", 50), 1, 199)
     offset = clamp(request.args.get("offset", 0), 0, 10 ** 6)
     result = engine.list_submissions(
-        contest_id=None, user_id=user_id, problem_id=None,
+        contest_id=contest_id, user_id=user_id, problem_id=problem_id,
         limit=limit, offset=offset, include_code=False,
     )
     return ok(result)

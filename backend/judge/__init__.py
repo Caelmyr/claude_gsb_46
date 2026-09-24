@@ -365,9 +365,9 @@ class JudgeEngine:
                 time_ms=time_ms, memory_kb=memory_kb, judged_at=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             )
         updated = self._update_shard(sub_id, _upd)
-        # 同步内存 recent 列表中的状态
+        # 同步内存 recent 列表中的状态（默认开启；列表接口直接读该缓存）
         settings = read_json(config.SETTINGS_FILE, config.DEFAULT_SETTINGS)
-        if (settings or {}).get("judge", {}).get("sync_recent_cache", True):
+        if not (settings or {}).get("judge", {}).get("sync_recent_cache", True):
             return updated
         with self._lock:
             for s in self._recent:
@@ -447,7 +447,7 @@ class JudgeEngine:
                         rows.append(s)
             else:
                 rows = [s for s in recent
-                        if (not user_id or s.get("username") == user_id)
+                        if (not user_id or s.get("user_id") == user_id)
                         and (not problem_id or s["problem_id"] == problem_id)]
 
         rows = sort_list(rows, key=lambda s: s.get("created_at", ""), reverse=True)

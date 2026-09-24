@@ -16,6 +16,10 @@
         <div class="sub">查看所有提交的评测结果，点击查看详情</div>
       </div>
       <div class="flex gap-8">
+        <select id="contestFilter" style="width:auto" onchange="load()">
+          <option value="">全部竞赛</option>
+          <option value="practice">练习模式</option>
+        </select>
         <select id="mineFilter" style="width:auto" onchange="load()">
           <option value="0">全部提交</option>
           <option value="1">只看我的</option>
@@ -47,8 +51,10 @@
 
     async function load() {
       const mine = OJ.el("mineFilter").value === "1";
+      const contestId = OJ.el("contestFilter").value;
       const params = new URLSearchParams();
       if (mine) params.set("mine", "1");
+      if (contestId) params.set("contest_id", contestId);
       params.set("limit", "100");
       const tbody = OJ.el("list");
       try {
@@ -71,6 +77,21 @@
       } catch (e) {
         tbody.innerHTML = `<tr><td colspan="9" class="empty">${OJ.esc(e.message)}</td></tr>`;
       }
+    }
+
+    async function loadContestOptions() {
+      const sel = OJ.el("contestFilter");
+      const current = sel.value;
+      try {
+        const data = await OJ.api("/contests");
+        const opts = ['<option value="">全部竞赛</option>',
+                      '<option value="practice">练习模式</option>'];
+        for (const c of data.items) {
+          opts.push(`<option value="${OJ.esc(c.id)}">${OJ.esc(c.title)}</option>`);
+        }
+        sel.innerHTML = opts.join("");
+        sel.value = current;
+      } catch (e) {}
     }
 
     async function loadProblemNames(items) {
@@ -109,6 +130,7 @@
       } catch (e) { OJ.toast(e.message, "error"); }
     }
 
+    loadContestOptions();
     load();
     setInterval(() => { if (!document.querySelector(".modal-mask")) load(); }, 5000);
   </script>
